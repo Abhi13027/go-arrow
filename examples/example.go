@@ -17,6 +17,8 @@ func main() {
 	appID := os.Getenv("APP_ID")
 	appSecret := os.Getenv("APP_SECRET")
 
+	fmt.Println(userID, password, totp_key, appID, appSecret)
+
 	client := arrow.NewClient(appID, appSecret)
 
 	err := client.AutoLogin(userID, password, totp_key)
@@ -38,5 +40,23 @@ func main() {
 	}
 
 	fmt.Printf("User Details: %+v\n", user)
+
+	orders, err := client.GetOrderBook()
+
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+
+	fmt.Printf("Order Book: %+v\n", orders)
+
+	holdings, err := client.GetHoldings()
+
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+
+	fmt.Printf("Holdings: %+v\n", holdings)
 
 }

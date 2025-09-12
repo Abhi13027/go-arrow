@@ -1,3 +1,4 @@
+// user.go
 package arrow
 
 import (
@@ -7,72 +8,158 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// User represents the structure of user details received from the Arrow API.
-type User struct {
-	Data struct {
-		AccountID   string `json:"accountID"` // Unique identifier for the user's account.
-		Address     string `json:"address"`   // Residential address of the user.
-		BankDetails []struct {
-			Vpa           string `json:"vpa"`           // Virtual Payment Address (UPI).
-			BankName      string `json:"bankName"`      // Name of the bank associated with the account.
-			AccountType   string `json:"accountType"`   // Type of bank account (e.g., Savings, Current).
-			AccountNumber string `json:"accountNumber"` // Account number linked to the user.
-		} `json:"bankDetails"` // List of bank accounts associated with the user.
-
-		Blocked       bool   `json:"blocked"` // Indicates if the user's account is blocked.
-		City          string `json:"city"`    // City of residence.
-		DepositoryIDs struct {
-			String string `json:"String"` // Depository participant ID as a string.
-			Valid  bool   `json:"Valid"`  // Boolean indicating if the depository ID is valid.
-		} `json:"depositoryIDs"` // User's depository information.
-
-		Email       string   `json:"email"`       // User's registered email address.
-		Exchanges   []string `json:"exchanges"`   // List of exchanges the user has access to.
-		ID          string   `json:"id"`          // Unique identifier for the user.
-		Image       string   `json:"image"`       // Profile image URL of the user.
-		Name        string   `json:"name"`        // Full name of the user.
-		OrdersTypes []string `json:"ordersTypes"` // Types of orders the user can place.
-		Pan         string   `json:"pan"`         // Permanent Account Number (PAN) of the user.
-		Phone       string   `json:"phone"`       // User's registered phone number.
-		Products    []string `json:"products"`    // List of financial products the user has access to.
-		State       string   `json:"state"`       // State of residence.
-		TotpEnabled bool     `json:"totpEnabled"` // Indicates whether TOTP-based 2FA is enabled.
-		UserType    string   `json:"userType"`    // Type of user (e.g., Retail, Institutional).
-	} `json:"data"` // Data field containing user details.
-
-	Status string `json:"status"` // Status of the API response (e.g., "success" or "error").
+// BankDetail represents a single bank account associated with a user.
+// Each user can have multiple bank accounts configured for transactions.
+type BankDetail struct {
+	ID            string `json:"id"`            // Unique identifier for the bank detail record
+	Vpa           string `json:"vpa"`           // Virtual Payment Address (UPI ID)
+	BankName      string `json:"bankName"`      // Name of the bank (e.g., "State Bank of India")
+	AccountType   string `json:"accountType"`   // Type of account (e.g., "SAVINGS", "CURRENT")
+	AccountNumber string `json:"accountNumber"` // Bank account number (may be masked for security)
+	IsDefault     bool   `json:"isDefault"`     // Whether this is the default bank account for transactions
 }
 
-// GetUserDetails fetches user profile details from the Arrow API.
+// Depository represents a depository participant (DP) account for securities trading.
+// Users need DP accounts to hold and trade securities in electronic form.
+type Depository struct {
+	Dp string `json:"dp"` // Depository Participant identifier
+	ID string `json:"id"` // Unique client ID with the depository
+}
+
+// UserData contains all the profile information for a user.
+// This includes personal details, financial accounts, and trading permissions.
+type UserData struct {
+	BankDetails []BankDetail `json:"bankDetails"` // List of linked bank accounts
+	Depository  []Depository `json:"depository"`  // List of depository accounts for securities
+	Email       string       `json:"email"`       // User's email address
+	Exchanges   []string     `json:"exchanges"`   // List of exchanges user has access to (e.g., "NSE", "BSE")
+	ID          string       `json:"id"`          // Unique user identifier in Arrow system
+	Image       string       `json:"image"`       // URL to user's profile image
+	Name        string       `json:"name"`        // Full name of the user
+	OrdersTypes int          `json:"ordersTypes"` // Bitmask representing allowed order types
+	Pan         string       `json:"pan"`         // Permanent Account Number (Indian tax identifier)
+	Phone       string       `json:"phone"`       // User's phone number
+	Products    []string     `json:"products"`    // List of enabled products (e.g., "CNC", "MIS", "NRML")
+	TotpEnabled bool         `json:"totpEnabled"` // Whether Time-based One-Time Password is enabled
+	UserType    string       `json:"userType"`    // Type of user account (e.g., "INDIVIDUAL", "HUF")
+}
+
+// User represents the complete API response structure for user details.
+// This follows Arrow API's standard response format with data and status fields.
+type User struct {
+	Data   UserData `json:"data"`   // The actual user profile data
+	Status string   `json:"status"` // API response status ("success" or "error")
+}
+
+// GetUserDetails fetches comprehensive user profile details from the Arrow API.
 //
-// It makes a GET request to the "/user/details" endpoint and returns a User struct
-// containing all user-related information.
+// This method retrieves all available information about the authenticated user,
+// including personal details, linked bank accounts, depository information,
+// trading permissions, and account settings.
+//
+// The method handles the complete request lifecycle:
+//   - Sends an authenticated GET request to the user details endpoint
+//   - Parses the JSON response into a structured User object
+//   - Validates the response status for success
+//   - Provides detailed error logging for troubleshooting
 //
 // Returns:
-//   - A pointer to a User struct with the retrieved details if successful.
-//   - An error if the request fails or the response cannot be parsed.
+//   - *User: A pointer to the User struct containing all profile details
+//   - error: nil on success, or an error describing what went wrong
 func (c *Client) GetUserDetails() (*User, error) {
 	endpoint := "/user/details"
 
 	// Send a GET request to the API to retrieve user details.
+	// This will include authentication headers automatically via the client's request method.
 	resp, err := c.request(endpoint, "GET", nil)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to fetch user profile")
-		return nil, err
+		log.Error().
+			Err(err).
+			Str("endpoint", endpoint).
+			Msg("Failed to fetch user profile from Arrow API")
+		return nil, fmt.Errorf("failed to fetch user profile: %w", err)
 	}
 
 	var result User
 	// Parse the JSON response into the User struct.
+	// The Arrow API returns nested JSON with data and status fields.
 	if err := json.Unmarshal(resp, &result); err != nil {
-		log.Error().Err(err).Msg("Failed to parse user profile response")
-		return nil, err
+		log.Error().
+			Err(err).
+			Str("endpoint", endpoint).
+			Msg("Failed to parse user profile response JSON")
+		return nil, fmt.Errorf("failed to parse user profile response: %w", err)
 	}
 
 	// Check if the API response status indicates success.
+	// Arrow API uses "success" string to indicate successful operations.
 	if result.Status != "success" {
-		return nil, fmt.Errorf("user profile retrieval failed")
+		log.Error().
+			Str("status", result.Status).
+			Str("endpoint", endpoint).
+			Msg("Arrow API returned non-success status for user profile")
+		return nil, fmt.Errorf("user profile retrieval failed with status: %s", result.Status)
 	}
 
-	log.Info().Msg("User profile retrieved successfully")
+	log.Info().
+		Str("user_id", result.Data.ID).
+		Str("user_name", result.Data.Name).
+		Int("bank_accounts", len(result.Data.BankDetails)).
+		Int("depositories", len(result.Data.Depository)).
+		Msg("User profile retrieved successfully from Arrow API")
+
 	return &result, nil
+}
+
+// HasDefaultBankAccount checks if the user has configured a default bank account.
+//
+// This is a convenience method to quickly determine if the user has set up
+// their banking details for transactions.
+//
+// Returns:
+//   - bool: true if a default bank account exists, false otherwise
+func (u *User) HasDefaultBankAccount() bool {
+	for _, bank := range u.Data.BankDetails {
+		if bank.IsDefault {
+			return true
+		}
+	}
+	return false
+}
+
+// GetDefaultBankAccount returns the user's default bank account details.
+//
+// Returns:
+//   - *BankDetail: pointer to the default bank account, or nil if none exists
+func (u *User) GetDefaultBankAccount() *BankDetail {
+	for i, bank := range u.Data.BankDetails {
+		if bank.IsDefault {
+			return &u.Data.BankDetails[i]
+		}
+	}
+	return nil
+}
+
+// HasExchangeAccess checks if the user has access to trade on a specific exchange.
+//
+// Parameters:
+//   - exchange: The exchange code to check (e.g., "NSE", "BSE", "MCX")
+//
+// Returns:
+//   - bool: true if the user has access to the specified exchange
+func (u *User) HasExchangeAccess(exchange string) bool {
+	for _, ex := range u.Data.Exchanges {
+		if ex == exchange {
+			return true
+		}
+	}
+	return false
+}
+
+// IsTotpEnabled returns whether the user has enabled Two-Factor Authentication.
+//
+// Returns:
+//   - bool: true if TOTP/2FA is enabled for the user account
+func (u *User) IsTotpEnabled() bool {
+	return u.Data.TotpEnabled
 }

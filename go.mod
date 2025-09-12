@@ -3,6 +3,7 @@ module github.com/Abhi13027/go-arrow
 go 1.24.5
 
 require (
+	github.com/joho/godotenv v1.5.1
 	github.com/pquerna/otp v1.5.0
 	github.com/rs/zerolog v1.34.0
 	github.com/valyala/fasthttp v1.65.0

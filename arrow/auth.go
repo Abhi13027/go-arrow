@@ -128,11 +128,11 @@ func (c *Client) AutoLogin(username, password, totpSecret string) error {
 
 	// Step 1: Send Login Request
 	payload := fmt.Sprintf(`{
-		"userId": "%s",
+		"userID": "%s",
 		"password": "%s",
 		"captchaValue": "",
-		"captchaId": null,
-		"appId": "%s",
+		"captchaID": null,
+		"appID": "%s",
 		"isAppLogin": true
 	}`, username, password, c.Config.AppID)
 
@@ -164,7 +164,7 @@ func (c *Client) AutoLogin(username, password, totpSecret string) error {
 	totpPayload := fmt.Sprintf(`{
 		"code": "%s",
 		"requestId": "%s",
-		"userId": "%s"
+		"userID": "%s"
 	}`, passcode, loginResp.Data.RequestID, username)
 
 	resp, err = c.rawRequest("https://edge.arrow.trade/auth/validate-2fa", "POST", []byte(totpPayload))
