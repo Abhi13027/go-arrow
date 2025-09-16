@@ -59,4 +59,31 @@ func main() {
 
 	fmt.Printf("Holdings: %+v\n", holdings)
 
+	limits, err := client.GetLimits()
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+
+	fmt.Printf("Limits: %+v\n", limits)
+
+	marginRequest := arrow.MarginRequest{
+		Exchange:         "NSE",
+		Symbol:           "YESBANK-EQ",
+		Quantity:         "1",
+		Price:            "2500",
+		Product:          "C",
+		TransactionType:  "B",
+		Order:            "LMT",
+		IncludePositions: false,
+	}
+
+	margin, err := client.GetMargin(marginRequest)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+
+	fmt.Printf("Margin: %+v\n", margin)
+
 }
