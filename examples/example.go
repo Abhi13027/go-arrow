@@ -30,60 +30,60 @@ func main() {
 
 	fmt.Println("Login successful!")
 
-	// Get user details
-	user, err := client.GetUserDetails()
+	// // Get user details
+	// user, err := client.GetUserDetails()
 
-	if err != nil {
-		fmt.Println("Error:", err)
-		return
+	// if err != nil {
+	// 	fmt.Println("Error:", err)
+	// 	return
 
-	}
+	// }
 
-	fmt.Printf("User Details: %+v\n", user)
+	// fmt.Printf("User Details: %+v\n", user)
 
-	orders, err := client.GetOrderBook()
+	// orders, err := client.GetOrderBook()
 
-	if err != nil {
-		fmt.Println("Error:", err)
-		return
-	}
+	// if err != nil {
+	// 	fmt.Println("Error:", err)
+	// 	return
+	// }
 
-	fmt.Printf("Order Book: %+v\n", orders)
+	// fmt.Printf("Order Book: %+v\n", orders)
 
-	holdings, err := client.GetHoldings()
+	// holdings, err := client.GetHoldings()
 
-	if err != nil {
-		fmt.Println("Error:", err)
-		return
-	}
+	// if err != nil {
+	// 	fmt.Println("Error:", err)
+	// 	return
+	// }
 
-	fmt.Printf("Holdings: %+v\n", holdings)
+	// fmt.Printf("Holdings: %+v\n", holdings)
 
-	limits, err := client.GetLimits()
-	if err != nil {
-		fmt.Println("Error:", err)
-		return
-	}
+	// limits, err := client.GetLimits()
+	// if err != nil {
+	// 	fmt.Println("Error:", err)
+	// 	return
+	// }
 
-	fmt.Printf("Limits: %+v\n", limits)
+	// fmt.Printf("Limits: %+v\n", limits)
 
-	marginRequest := arrow.MarginRequest{
-		Exchange:         "NSE",
-		Symbol:           "YESBANK-EQ",
-		Quantity:         "1",
-		Price:            "2500",
-		Product:          "C",
-		TransactionType:  "B",
-		Order:            "LMT",
-		IncludePositions: false,
-	}
+	// marginRequest := arrow.MarginRequest{
+	// 	Exchange:         "NSE",
+	// 	Symbol:           "YESBANK-EQ",
+	// 	Quantity:         "1",
+	// 	Price:            "2500",
+	// 	Product:          "C",
+	// 	TransactionType:  "B",
+	// 	Order:            "LMT",
+	// 	IncludePositions: false,
+	// }
 
-	margin, err := client.GetMargin(marginRequest)
-	if err != nil {
-		fmt.Println("Error:", err)
-		return
-	}
+	// margin, err := client.GetMargin(marginRequest)
+	// if err != nil {
+	// 	fmt.Println("Error:", err)
+	// 	return
+	// }
 
-	fmt.Printf("Margin: %+v\n", margin)
+	// fmt.Printf("Margin: %+v\n", margin)
 
 }
