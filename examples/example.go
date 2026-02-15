@@ -30,16 +30,15 @@ func main() {
 
 	fmt.Println("Login successful!")
 
-	// // Get user details
-	// user, err := client.GetUserDetails()
+	// Get user details
+	user, err := client.GetUserDetails()
 
-	// if err != nil {
-	// 	fmt.Println("Error:", err)
-	// 	return
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
 
-	// }
-
-	// fmt.Printf("User Details: %+v\n", user)
+	fmt.Printf("User Details: %+v\n", user)
 
 	// orders, err := client.GetOrderBook()
 

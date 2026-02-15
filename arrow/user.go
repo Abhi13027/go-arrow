@@ -13,9 +13,10 @@ import (
 type BankDetail struct {
 	ID            string `json:"id"`            // Unique identifier for the bank detail record
 	Vpa           string `json:"vpa"`           // Virtual Payment Address (UPI ID)
-	BankName      string `json:"bankName"`      // Name of the bank (e.g., "State Bank of India")
+	BankName      string `json:"bankName"`      // Name of the bank (e.g., "HDFC Bank")
 	AccountType   string `json:"accountType"`   // Type of account (e.g., "SAVINGS", "CURRENT")
-	AccountNumber string `json:"accountNumber"` // Bank account number (may be masked for security)
+	AccountNumber string `json:"accountNumber"` // Bank account number (may be masked, e.g. "*9380")
+	IfscCode      string `json:"ifscCode"`      // Indian Financial System Code for the bank branch
 	IsDefault     bool   `json:"isDefault"`     // Whether this is the default bank account for transactions
 }
 

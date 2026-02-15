@@ -10,12 +10,13 @@ import (
 
 // Symbol represents trading symbol information within a holding.
 //
-// This struct contains the essential identifiers for a trading instrument,
-// including its symbol name, exchange, and unique token identifier.
+// A holding can have multiple symbols (e.g., NSE and BSE variants of the same instrument).
+// This struct contains the essential identifiers for a trading instrument.
 type Symbol struct {
-	Symbol   string `json:"symbol"`   // Trading symbol of the instrument (e.g., RELIANCE, TCS, HDFCBANK).
-	Exchange string `json:"exchange"` // Name of the exchange where the instrument is traded (e.g., NSE, BSE).
-	Token    string `json:"token"`    // Unique token identifier for the trading instrument.
+	Symbol        string `json:"symbol"`        // Base symbol of the instrument (e.g., RELIANCE, TCS, HDFCBANK).
+	TradingSymbol string `json:"tradingSymbol"` // Exchange-specific trading symbol (e.g., RELIANCE-EQ for NSE).
+	Exchange      string `json:"exchange"`      // Name of the exchange (e.g., NSE, BSE).
+	Token         string `json:"token"`         // Unique token identifier for the trading instrument.
 }
 
 // Holding represents a long-term investment holding owned by the user.

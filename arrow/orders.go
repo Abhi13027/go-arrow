@@ -10,19 +10,16 @@ import (
 
 // OrderRequest represents the structure for placing an order.
 type OrderRequest struct {
-	Exchange        string `json:"exchange"`                // Exchange where the order is placed (e.g., NSE, BSE).
-	Quantity        string `json:"quantity"`                // Order quantity.
-	DisclosedQty    string `json:"disclosedQty,omitempty"`  // Disclosed quantity (optional).
-	Product         string `json:"product"`                 // Product type (e.g., MIS, CNC, NRML).
-	Symbol          string `json:"symbol"`                  // Trading symbol of the instrument.
-	TransactionType string `json:"transactionType"`         // Order transaction type (BUY/SELL).
-	OrderType       string `json:"order"`                   // Type of order (e.g., MARKET, LIMIT).
-	Price           string `json:"price"`                   // Order price (applicable for LIMIT orders).
-	Validity        string `json:"validity"`                // Order validity (e.g., DAY, IOC).
-	Tags            string `json:"tags,omitempty"`          // Custom tags for order tracking (optional).
-	AMO             bool   `json:"amo,omitempty"`           // Indicates if the order is an After Market Order (AMO).
-	TriggerPrice    string `json:"triggerPrice,omitempty"`  // Trigger price for stop-loss or conditional orders.
-	BookLossPrice   string `json:"bookLossPrice,omitempty"` // Book loss price for risk management.
+	Exchange        string `json:"exchange"`               // Exchange where the order is placed (e.g., NSE, BSE).
+	Quantity        string `json:"quantity"`               // Order quantity.
+	DisclosedQty    string `json:"disclosedQty,omitempty"` // Disclosed quantity (optional).
+	Product         string `json:"product"`                // Product type (e.g., MIS, CNC, NRML).
+	Symbol          string `json:"symbol"`                 // Trading symbol of the instrument.
+	TransactionType string `json:"transactionType"`        // Order transaction type (BUY/SELL).
+	OrderType       string `json:"order"`                  // Type of order (e.g., MARKET, LIMIT).
+	Price           string `json:"price"`                  // Order price (applicable for LIMIT orders).
+	Validity        string `json:"validity"`               // Order validity (e.g., DAY, IOC).
+	Remarks         string `json:"remarks,omitempty"`      // Custom Remarks for order tracking (optional).
 }
 
 // OrderResponse represents the API response after placing an order.
