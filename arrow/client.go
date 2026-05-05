@@ -2,6 +2,10 @@
 package arrow
 
 import (
+	"fmt"
+	"sync"
+
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/valyala/fasthttp"
 )
@@ -13,6 +17,7 @@ type Config struct {
 	Token        string // Authentication token for API requests.
 	BaseURL      string // Base URL of the Arrow API.
 	RefreshToken string // Token used to refresh authentication when expired.
+	Debug        bool   // Enables verbose SDK debug logs when true.
 }
 
 // Client is the main struct for interacting with the Arrow API.
@@ -21,6 +26,7 @@ type Config struct {
 type Client struct {
 	Config     Config           // Configuration settings for the API client.
 	HTTPClient *fasthttp.Client // HTTP client for executing requests.
+	mu         sync.RWMutex
 }
 
 // NewClient initializes a new SDK client with the provided application credentials.
@@ -57,19 +63,19 @@ func NewClient(appID, appSecret string) *Client {
 //   - An error if the request fails.
 func (c *Client) request(endpoint string, method string, payload []byte) ([]byte, error) {
 	url := c.Config.BaseURL + endpoint
-	log.Info().Str("url", url).Msg("Making request")
+	c.debugf("Making request", func(e *zerolog.Event) {
+		e.Str("url", url).Str("method", method)
+	})
 
 	req := fasthttp.AcquireRequest()
 	defer fasthttp.ReleaseRequest(req)
 	req.SetRequestURI(url)
 	req.Header.Set("appId", c.Config.AppID)
 	req.Header.Set("token", c.Config.Token)
-
-	if method == "POST" {
-		req.Header.SetMethod("POST")
+	req.Header.SetMethod(method)
+	if len(payload) > 0 {
+		req.Header.SetContentType("application/json")
 		req.SetBody(payload)
-	} else {
-		req.Header.SetMethod("GET")
 	}
 
 	resp := fasthttp.AcquireResponse()
@@ -80,6 +86,9 @@ func (c *Client) request(endpoint string, method string, payload []byte) ([]byte
 	if err != nil {
 		log.Error().Err(err).Msg("API request failed")
 		return nil, err
+	}
+	if resp.StatusCode() >= fasthttp.StatusBadRequest {
+		return nil, fmt.Errorf("request failed with status %d: %s", resp.StatusCode(), string(resp.Body()))
 	}
 
 	return resp.Body(), nil
@@ -98,15 +107,17 @@ func (c *Client) request(endpoint string, method string, payload []byte) ([]byte
 //   - A byte slice containing the response body if successful.
 //   - An error if the request fails.
 func (c *Client) rawRequest(url string, method string, payload []byte) ([]byte, error) {
+	c.debugf("Making raw request", func(e *zerolog.Event) {
+		e.Str("url", url).Str("method", method)
+	})
+
 	req := fasthttp.AcquireRequest()
 	defer fasthttp.ReleaseRequest(req)
 	req.SetRequestURI(url)
-
-	if method == "POST" {
-		req.Header.SetMethod("POST")
+	req.Header.SetMethod(method)
+	if len(payload) > 0 {
+		req.Header.SetContentType("application/json")
 		req.SetBody(payload)
-	} else {
-		req.Header.SetMethod("GET")
 	}
 
 	resp := fasthttp.AcquireResponse()
@@ -117,6 +128,9 @@ func (c *Client) rawRequest(url string, method string, payload []byte) ([]byte, 
 	if err != nil {
 		log.Error().Err(err).Msg("API request failed")
 		return nil, err
+	}
+	if resp.StatusCode() >= fasthttp.StatusBadRequest {
+		return nil, fmt.Errorf("request failed with status %d: %s", resp.StatusCode(), string(resp.Body()))
 	}
 
 	return resp.Body(), nil
@@ -130,6 +144,31 @@ func (c *Client) rawRequest(url string, method string, payload []byte) ([]byte, 
 //   - token: The new authentication token.
 func (c *Client) SetToken(token string) {
 	c.Config.Token = token
+}
+
+// SetDebug enables or disables verbose SDK logging.
+func (c *Client) SetDebug(enabled bool) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.Config.Debug = enabled
+}
+
+// IsDebug returns whether verbose SDK logging is enabled.
+func (c *Client) IsDebug() bool {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.Config.Debug
+}
+
+func (c *Client) debugf(msg string, addFields func(*zerolog.Event)) {
+	if !c.IsDebug() {
+		return
+	}
+	e := log.Debug()
+	if addFields != nil {
+		addFields(e)
+	}
+	e.Msg(msg)
 }
 
 // GetToken retrieves the current authentication token.

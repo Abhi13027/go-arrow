@@ -6,15 +6,16 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// MarginRequest represents the request payload for margin calculation.
 type MarginRequest struct {
-	Exchange         string `json:"exchange"`
-	Quantity         string `json:"quantity"`
-	Price            string `json:"price"`
-	Product          string `json:"product"`
-	TransactionType  string `json:"transactionType"`
-	Order            string `json:"order"`
-	IncludePositions bool   `json:"includePositions"`
-	Symbol           string `json:"symbol"`
+	Exchange         Exchange        `json:"exchange"`
+	Symbol           string          `json:"symbol"`
+	Quantity         string          `json:"quantity"`
+	Price            string          `json:"price"`
+	Product          Product         `json:"product"`
+	TransactionType  TransactionType `json:"transactionType"`
+	Order            OrderType       `json:"order"`
+	IncludePositions bool            `json:"includePositions"`
 }
 
 type MarginResponse struct {

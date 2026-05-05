@@ -11,6 +11,7 @@ import (
 
 	"github.com/pquerna/otp"
 	"github.com/pquerna/otp/totp"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
@@ -83,7 +84,9 @@ func (c *Client) Authenticate(requestToken string) (string, error) {
 		c.Config.RefreshToken = authResponse.Data.RefreshToken
 	}
 
-	log.Info().Str("userID", authResponse.Data.UserID).Msg("Authentication successful")
+	c.debugf("Authentication successful", func(e *zerolog.Event) {
+		e.Str("userID", authResponse.Data.UserID)
+	})
 	return authResponse.Data.Token, nil
 }
 
@@ -101,13 +104,13 @@ func (c *Client) Login() {
 	fmt.Print("Enter Request Token: ")
 	fmt.Scanln(&requestToken)
 
-	token, err := c.Authenticate(requestToken)
+	_, err := c.Authenticate(requestToken)
 	if err != nil {
 		log.Error().Err(err).Msg("Login authentication failed")
 		return
 	}
 
-	fmt.Println("✅ Authentication successful! Token:", token)
+	fmt.Println("Authentication successful.")
 }
 
 // AutoLogin handles the entire authentication flow automatically using credentials.
@@ -194,13 +197,12 @@ func (c *Client) AutoLogin(username, password, totpSecret string) error {
 	requestToken := parsedURL.Query().Get("request-token")
 
 	// Step 5: Authenticate and Get Access Token
-	token, err := c.Authenticate(requestToken)
+	_, err = c.Authenticate(requestToken)
 	if err != nil {
 		log.Error().Err(err).Msg("Authentication failed")
 		return err
 	}
-
-	fmt.Println("✅ AutoLogin successful! Token:", token)
+	fmt.Println("AutoLogin successful.")
 	return nil
 }
 

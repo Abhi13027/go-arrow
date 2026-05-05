@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
@@ -112,6 +113,8 @@ func (c *Client) GetHoldings() ([]Holding, error) {
 		return nil, fmt.Errorf("holdings retrieval failed with status: %s", result.Status)
 	}
 
-	log.Info().Int("count", len(result.Data)).Msg("Holdings retrieved successfully")
+	c.debugf("Holdings retrieved successfully", func(e *zerolog.Event) {
+		e.Int("count", len(result.Data))
+	})
 	return result.Data, nil
 }

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
@@ -102,12 +103,12 @@ func (c *Client) GetUserDetails() (*User, error) {
 		return nil, fmt.Errorf("user profile retrieval failed with status: %s", result.Status)
 	}
 
-	log.Info().
-		Str("user_id", result.Data.ID).
-		Str("user_name", result.Data.Name).
-		Int("bank_accounts", len(result.Data.BankDetails)).
-		Int("depositories", len(result.Data.Depository)).
-		Msg("User profile retrieved successfully from Arrow API")
+	c.debugf("User profile retrieved successfully from Arrow API", func(e *zerolog.Event) {
+		e.Str("user_id", result.Data.ID).
+			Str("user_name", result.Data.Name).
+			Int("bank_accounts", len(result.Data.BankDetails)).
+			Int("depositories", len(result.Data.Depository))
+	})
 
 	return &result, nil
 }

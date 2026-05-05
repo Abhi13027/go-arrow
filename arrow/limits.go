@@ -55,6 +55,6 @@ func (c *Client) GetLimits() (*Limits, error) {
 		return nil, fmt.Errorf("failed to retrieve trading limits")
 	}
 
-	log.Info().Msg("Trading limits retrieved successfully")
+	c.debugf("Trading limits retrieved successfully", nil)
 	return &result, nil
 }

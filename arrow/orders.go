@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
@@ -125,6 +126,19 @@ type OrderBookResponse struct {
 	Status string         `json:"status"` // API response status indicating success or failure.
 }
 
+// Trade is a single execution line from the trade book (/user/trades).
+type Trade struct {
+	Exchange        string `json:"exchange"`
+	Symbol          string `json:"symbol"`
+	ID              string `json:"id"`
+	OrderID         string `json:"orderID"`
+	TransactionType string `json:"transactionType"`
+	Product         string `json:"product"`
+	Quantity        string `json:"quantity"`
+	FillPrice       string `json:"fillPrice"`
+	FillTime        string `json:"fillTime"`
+}
+
 // PlaceOrder places a new order in the market.
 //
 // It sends a POST request to the API endpoint "/order/{orderType}" with the order details.
@@ -140,7 +154,9 @@ func (c *Client) PlaceOrder(orderType string, order OrderRequest) (*OrderRespons
 	endpoint := fmt.Sprintf("/order/%s", orderType)
 
 	payload, err := json.Marshal(order)
-	log.Info().Str("payload", string(payload)).Msg("Placing order")
+	c.debugf("Placing order", func(e *zerolog.Event) {
+		e.Str("orderType", orderType)
+	})
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to serialize order request")
 		return nil, err
@@ -163,7 +179,9 @@ func (c *Client) PlaceOrder(orderType string, order OrderRequest) (*OrderRespons
 		return nil, fmt.Errorf("order placement failed")
 	}
 
-	log.Info().Str("orderNo", result.Data.OrderNo).Msg("Order placed successfully")
+	c.debugf("Order placed successfully", func(e *zerolog.Event) {
+		e.Str("orderNo", result.Data.OrderNo)
+	})
 	return &result, nil
 }
 
@@ -204,7 +222,9 @@ func (c *Client) ModifyOrder(orderType, orderID string, order OrderRequest) (*Or
 		return nil, fmt.Errorf("order modification failed")
 	}
 
-	log.Info().Str("orderNo", result.Data.OrderNo).Msg("Order modified successfully")
+	c.debugf("Order modified successfully", func(e *zerolog.Event) {
+		e.Str("orderNo", result.Data.OrderNo)
+	})
 	return &result, nil
 }
 
@@ -243,7 +263,28 @@ func (c *Client) CancelOrder(orderType, orderID string) error {
 		return fmt.Errorf("order cancellation failed")
 	}
 
-	log.Info().Str("message", result.Data.Message).Msg("Order cancelled successfully")
+	c.debugf("Order cancelled successfully", func(e *zerolog.Event) {
+		e.Str("message", result.Data.Message)
+	})
+	return nil
+}
+
+// CancelAllOrders cancels all open orders (DELETE /user/orders).
+func (c *Client) CancelAllOrders() error {
+	resp, err := c.request("/user/orders", "DELETE", nil)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to cancel all orders")
+		return err
+	}
+	var result GenericResponse[map[string]any]
+	if err := json.Unmarshal(resp, &result); err != nil {
+		log.Error().Err(err).Msg("Failed to parse cancel all orders response")
+		return err
+	}
+	if result.Status != "success" {
+		return fmt.Errorf("cancel all orders failed with status: %s", result.Status)
+	}
+	c.debugf("All orders cancelled successfully", nil)
 	return nil
 }
 
@@ -276,7 +317,9 @@ func (c *Client) GetOrder(orderID string) (*OrderDetailsResponse, error) {
 		return nil, fmt.Errorf("failed to retrieve order details")
 	}
 
-	log.Info().Str("orderNo", orderID).Msg("Order details retrieved successfully")
+	c.debugf("Order details retrieved successfully", func(e *zerolog.Event) {
+		e.Str("orderNo", orderID)
+	})
 	return &result, nil
 }
 
@@ -330,6 +373,29 @@ func (c *Client) GetOrderBook() ([]OrderDetails, error) {
 		return nil, fmt.Errorf("order book retrieval failed with status: %s", result.Status)
 	}
 
-	log.Info().Int("count", len(result.Data)).Msg("Order book retrieved successfully")
+	c.debugf("Order book retrieved successfully", func(e *zerolog.Event) {
+		e.Int("count", len(result.Data))
+	})
+	return result.Data, nil
+}
+
+// GetTradeBook retrieves executed trades for the user (GET /user/trades).
+func (c *Client) GetTradeBook() ([]Trade, error) {
+	resp, err := c.request("/user/trades", "GET", nil)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to fetch trade book")
+		return nil, err
+	}
+	var result GenericResponse[[]Trade]
+	if err := json.Unmarshal(resp, &result); err != nil {
+		log.Error().Err(err).Msg("Failed to parse trade book response")
+		return nil, err
+	}
+	if result.Status != "success" {
+		return nil, fmt.Errorf("trade book retrieval failed with status: %s", result.Status)
+	}
+	c.debugf("Trade book retrieved successfully", func(e *zerolog.Event) {
+		e.Int("count", len(result.Data))
+	})
 	return result.Data, nil
 }
