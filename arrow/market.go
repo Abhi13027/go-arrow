@@ -60,6 +60,30 @@ func (c *Client) GetOptionChain(req OptionChainRequest) (json.RawMessage, error)
 	return result.Data, nil
 }
 
+// OptionChainSymbolsByCategory is the object under response "data" for option-chain symbol listings.
+// Keys are categories (e.g. "equity", "indices"); values map listing ids such as "NSE:RELIANCE-EQ"
+// or "INDEX:NIFTY" to available expiry date strings.
+type OptionChainSymbolsByCategory map[string]map[string][]string
+
+// GetAllOptionChainSymbols fetches all option-chain symbol listings and expiries (GET /info/option-chain-symbols/all).
+func (c *Client) GetAllOptionChainSymbols() (OptionChainSymbolsByCategory, error) {
+	resp, err := c.request("/info/option-chain-symbols/all", "GET", nil)
+	if err != nil {
+		return nil, err
+	}
+	var result GenericResponse[OptionChainSymbolsByCategory]
+	if err := json.Unmarshal(resp, &result); err != nil {
+		return nil, err
+	}
+	if result.Status != "success" {
+		return nil, fmt.Errorf("option chain symbols retrieval failed with status: %s", result.Status)
+	}
+	if result.Data == nil {
+		return OptionChainSymbolsByCategory{}, nil
+	}
+	return result.Data, nil
+}
+
 type Holiday struct {
 	Date     string `json:"date"`
 	Exchange string `json:"exchange"`
